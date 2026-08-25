@@ -112,7 +112,7 @@
     return { query: '', results: [], searching: false, picked: null, error: '' };
   }
   function emptyPlayForm() {
-    return { gameId: '', jugadores: [], ganador: '', resultado: 'Victoria', duracion: '60' };
+    return { gameId: '', jugadores: [], ganador: '', resultado: 'Victoria', duracion: '60', fecha: '' };
   }
   function emptyWantPlayForm() {
     return { gameId: '', targetIds: [] };
@@ -169,6 +169,7 @@
     dialog: null, // null | 'add' | 'play' | 'detail' | 'wish' | 'loan' | 'wantplay'
     detailId: null,
     editingGameId: null,
+    editingPlayId: null,
     formError: '',
     addForm: emptyGameForm(),
     wishForm: emptyWishForm(),
@@ -632,7 +633,7 @@
       </div>
       <div class="table-scroll"><table class="table">
         <thead>
-          <tr><th>Fecha</th><th>Juego</th><th>Jugadores</th><th>Ganador</th><th class="col-duracion">Duración</th></tr>
+          <tr><th>Fecha</th><th>Juego</th><th>Jugadores</th><th>Ganador</th><th class="col-duracion">Duración</th><th></th></tr>
         </thead>
         <tbody>
           ${rows.map((p) => `
@@ -644,7 +645,8 @@
                 ? `<span class="tag ${p.resultado === 'Victoria' ? 'tag-accent' : 'tag-neutral'}">${esc(p.resultado)}</span>`
                 : `<span class="tag tag-outline tag-tipo">${esc(p.ganador_nombre || '—')}</span>`}</td>
               <td class="col-duracion">${esc(p.duracion)} min</td>
-            </tr>`).join('') || `<tr><td colspan="5" class="text-muted" style="padding:22.4px 0">Todavía no hay partidas registradas.</td></tr>`}
+              <td><button class="btn btn-icon btn-ghost" data-action="edit-play" data-id="${p.id}" aria-label="Editar partida" title="Editar">✎</button></td>
+            </tr>`).join('') || `<tr><td colspan="6" class="text-muted" style="padding:22.4px 0">Todavía no hay partidas registradas.</td></tr>`}
         </tbody>
       </table></div>
     </section>`;
@@ -1072,6 +1074,7 @@
 
   function renderPlayDialog() {
     const pf = state.playForm;
+    const editing = !!state.editingPlayId;
     const gameOptions = [...state.games].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
     if (!pf.gameId && gameOptions.length) pf.gameId = String(gameOptions[0].id);
     const selectedGame = state.games.find((g) => String(g.id) === String(pf.gameId));
@@ -1080,7 +1083,13 @@
     dialogRoot.innerHTML = `
     <div class="dialog-backdrop" data-action="backdrop-close">
       <div class="dialog" data-stop>
-        <div class="dialog-title">Registrar partida</div>
+        <div class="dialog-title">${editing ? 'Editar partida' : 'Registrar partida'}</div>
+
+        ${editing ? `
+        <div class="field">
+          <label for="p-fecha">Fecha</label>
+          <input id="p-fecha" class="input" type="date" data-action="play-fecha" value="${esc(pf.fecha)}">
+        </div>` : ''}
 
         <div class="field">
           <label for="p-juego">Juego</label>
@@ -1131,7 +1140,7 @@
 
         <div class="dialog-actions">
           <button class="btn btn-secondary" data-action="close-dialog">Cancelar</button>
-          <button class="btn btn-primary" data-action="save-play">Guardar partida</button>
+          <button class="btn btn-primary" data-action="save-play">${editing ? 'Guardar cambios' : 'Guardar partida'}</button>
         </div>
       </div>
     </div>`;
@@ -1286,10 +1295,12 @@
     state.dialog = null;
     state.detailId = null;
     state.editingGameId = null;
+    state.editingPlayId = null;
     state.formError = '';
     state.playError = '';
     state.bgg = emptyBgg();
     state.addForm = emptyGameForm();
+    state.playForm = emptyPlayForm();
     state.wishForm = emptyWishForm();
     state.wantPlayForm = emptyWantPlayForm();
     state.wantPlayError = '';
@@ -1428,9 +1439,15 @@
       } else {
         body.ganador = pf.ganador || pf.jugadores[0];
       }
-      await api('api/plays.php', { method: 'POST', body: JSON.stringify(body) });
+      if (state.editingPlayId) {
+        body.fecha = pf.fecha;
+        await api('api/plays.php?id=' + state.editingPlayId, { method: 'PUT', body: JSON.stringify(body) });
+      } else {
+        await api('api/plays.php', { method: 'POST', body: JSON.stringify(body) });
+      }
       state.view = 'partidas';
       state.playForm = emptyPlayForm();
+      state.editingPlayId = null;
       await refresh();
       closeDialog();
     } catch (e) {
@@ -1562,7 +1579,25 @@
       render();
       return;
     }
-    if (action === 'open-play') { state.dialog = 'play'; state.playError = ''; render(); return; }
+    if (action === 'open-play') {
+      state.dialog = 'play'; state.playError = ''; state.editingPlayId = null; state.playForm = emptyPlayForm();
+      render();
+      return;
+    }
+    if (action === 'edit-play') {
+      const p = state.plays.find((x) => x.id === Number(t.dataset.id));
+      if (!p) return;
+      const game = state.games.find((g) => g.id === p.game_id);
+      const isCoop = !!game && game.tipo === 'Cooperativo';
+      state.dialog = 'play'; state.playError = ''; state.editingPlayId = p.id;
+      state.playForm = {
+        gameId: String(p.game_id), jugadores: p.jugadores.map((j) => j.nombre),
+        ganador: isCoop ? '' : (p.ganador_nombre || p.jugadores[0]?.nombre || ''),
+        resultado: p.resultado || 'Victoria', duracion: String(p.duracion), fecha: p.fecha,
+      };
+      render();
+      return;
+    }
     if (action === 'open-wish') {
       state.dialog = 'wish'; state.wishForm = emptyWishForm(); state.formError = '';
       state.bgg = emptyBgg(); state.bggTarget = 'wish';
@@ -1692,6 +1727,7 @@
     if (e.target.dataset.action === 'bgg-query') { state.bgg.query = e.target.value; return; }
     if (e.target.dataset.action === 'new-player-name') { state.newPlayerName = e.target.value; return; }
     if (e.target.dataset.action === 'play-duracion') { state.playForm.duracion = e.target.value; return; }
+    if (e.target.dataset.action === 'play-fecha') { state.playForm.fecha = e.target.value; return; }
     if (e.target.dataset.wfield) { state.wishForm[e.target.dataset.wfield] = e.target.value; return; }
     if (e.target.dataset.lfield) { state.loanForm[e.target.dataset.lfield] = e.target.value; return; }
   });

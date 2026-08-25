@@ -10,7 +10,8 @@ ludoteca_require_login_api();
 $pdo = ludoteca_db();
 ludoteca_require_up_to_date_api($pdo);
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+$method = $_SERVER['REQUEST_METHOD'];
+if ($method !== 'POST' && $method !== 'PUT') {
     json_error('Método no permitido.', 405);
 }
 
@@ -51,33 +52,70 @@ if ($isCoop) {
     $ganadorId = $playerIds[$ganadorNombre] ?? repo_find_or_create_player($pdo, $ganadorNombre);
 }
 
-$fecha = date('Y-m-d');
 $duracion = max(1, (int) num_or($b['duracion'] ?? null, 60));
 
-$pdo->beginTransaction();
-try {
-    $stmt = $pdo->prepare('INSERT INTO plays (game_id, fecha, ganador_id, resultado, duracion) VALUES (?, ?, ?, ?, ?)');
-    $stmt->execute([$gameId, $fecha, $ganadorId, $resultado, $duracion]);
-    $playId = (int) $pdo->lastInsertId();
+if ($method === 'POST') {
+    $fecha = date('Y-m-d');
 
-    $link = $pdo->prepare('INSERT INTO play_players (play_id, player_id) VALUES (?, ?)');
-    foreach ($playerIds as $pid) {
-        $link->execute([$playId, $pid]);
+    $pdo->beginTransaction();
+    try {
+        $stmt = $pdo->prepare('INSERT INTO plays (game_id, fecha, ganador_id, resultado, duracion) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute([$gameId, $fecha, $ganadorId, $resultado, $duracion]);
+        $playId = (int) $pdo->lastInsertId();
+
+        $link = $pdo->prepare('INSERT INTO play_players (play_id, player_id) VALUES (?, ?)');
+        foreach ($playerIds as $pid) {
+            $link->execute([$playId, $pid]);
+        }
+
+        // Las propuestas de "Quiero jugar" de este juego que alguien había aceptado ya
+        // cumplieron su función: se registró la partida, así que se convierten en ella
+        // (se borran) en vez de quedarse pendientes para siempre.
+        $pdo->prepare(
+            'DELETE w FROM want_to_play w
+             WHERE w.game_id = ?
+               AND EXISTS (SELECT 1 FROM want_to_play_targets t WHERE t.want_to_play_id = w.id AND t.accepted_at IS NOT NULL)'
+        )->execute([$gameId]);
+
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        json_error('No se pudo registrar la partida: ' . $e->getMessage(), 500);
     }
 
-    // Las propuestas de "Quiero jugar" de este juego que alguien había aceptado ya
-    // cumplieron su función: se registró la partida, así que se convierten en ella
-    // (se borran) en vez de quedarse pendientes para siempre.
-    $pdo->prepare(
-        'DELETE w FROM want_to_play w
-         WHERE w.game_id = ?
-           AND EXISTS (SELECT 1 FROM want_to_play_targets t WHERE t.want_to_play_id = w.id AND t.accepted_at IS NOT NULL)'
-    )->execute([$gameId]);
+    json_ok(['id' => $playId]);
+} else {
+    // PUT: editar una partida ya registrada (fecha, juego, jugadores, ganador/resultado, duración).
+    $playId = (int) ($_GET['id'] ?? 0);
+    if (!$playId) {
+        json_error('Falta el id de la partida.');
+    }
+    $existsStmt = $pdo->prepare('SELECT 1 FROM plays WHERE id = ?');
+    $existsStmt->execute([$playId]);
+    if (!$existsStmt->fetchColumn()) {
+        json_error('Esa partida ya no existe.', 404);
+    }
 
-    $pdo->commit();
-} catch (Throwable $e) {
-    $pdo->rollBack();
-    json_error('No se pudo registrar la partida: ' . $e->getMessage(), 500);
+    $fecha = str_or($b['fecha'] ?? '', date('Y-m-d'));
+    if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $fecha)) {
+        json_error('Fecha no válida.');
+    }
+
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('UPDATE plays SET game_id = ?, fecha = ?, ganador_id = ?, resultado = ?, duracion = ? WHERE id = ?')
+            ->execute([$gameId, $fecha, $ganadorId, $resultado, $duracion, $playId]);
+
+        $pdo->prepare('DELETE FROM play_players WHERE play_id = ?')->execute([$playId]);
+        $link = $pdo->prepare('INSERT INTO play_players (play_id, player_id) VALUES (?, ?)');
+        foreach ($playerIds as $pid) {
+            $link->execute([$playId, $pid]);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        json_error('No se pudo guardar la partida: ' . $e->getMessage(), 500);
+    }
+
+    json_ok();
 }
-
-json_ok(['id' => $playId]);

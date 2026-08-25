@@ -447,7 +447,11 @@ html.nav-collapsed .nav-theme .theme-label { display: none; }
    .dialog-backdrop (place-items:center) y sin esto el ancho "deseado" de la cinta
    (miles de px, 37 carátulas en fila) infla la pista del grid y centra el diálogo
    fuera de la pantalla, aunque el fondo oscuro sí se vea a tamaño completo. */
-.dialog { min-width: 0; }
+/* .dialog-backdrop (nocturne.css) centra con grid pero no limita la altura del propio
+   diálogo: en formularios largos (Añadir/Editar juego) en pantallas pequeñas el
+   contenido se salía por debajo de la pantalla sin ninguna forma de llegar a los
+   botones. Con esto, el propio diálogo hace scroll cuando no cabe entero. */
+.dialog { min-width: 0; max-height: 100%; overflow-y: auto; }
 .reel-viewport {
   position: relative; overflow: hidden; height: 190px; margin-top: 11.2px; width: 100%; min-width: 0; max-width: 100%;
   border: 1px solid var(--color-neutral-800); background: var(--color-surface);
