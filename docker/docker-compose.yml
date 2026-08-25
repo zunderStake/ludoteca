@@ -1,0 +1,26 @@
+services:
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ludoteca
+      MYSQL_USER: ludoteca
+      MYSQL_PASSWORD: ludoteca
+    ports:
+      - "33061:3306"
+    volumes:
+      - ludoteca_db_data:/var/lib/mysql
+
+  php:
+    build: ./php
+    restart: unless-stopped
+    depends_on:
+      - db
+    volumes:
+      - ..:/var/www/html
+    ports:
+      - "8080:80"
+
+volumes:
+  ludoteca_db_data:

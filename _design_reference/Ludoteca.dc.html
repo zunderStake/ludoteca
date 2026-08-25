@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/nocturne-cbfc4c59-94fa-5fb6-8809-f12b94c5087f/styles.css">
+<script src="_ds/nocturne-cbfc4c59-94fa-5fb6-8809-f12b94c5087f/_ds_bundle.js"></script>
+<script src="./image-slot.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #17191b; color: #dcdedd; }
+  @keyframes riseIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</helmet>
+<div style="--color-bg: #17191b; --color-surface: #1f2225; --color-text: #dcdedd; --color-accent: #d08a2c; --color-accent-2: #8f9ba0; --color-divider: color-mix(in srgb, #dcdedd 14%, transparent); --color-neutral-100: #f4f5f5; --color-neutral-200: #e4e6e6; --color-neutral-300: #cbcfd0; --color-neutral-400: #adb2b4; --color-neutral-500: #8d9295; --color-neutral-600: #6f7478; --color-neutral-700: #55595d; --color-neutral-800: #3c4043; --color-neutral-900: #272a2c; --color-accent-100: #fbf3e8; --color-accent-200: #f5e3c9; --color-accent-300: #ecc999; --color-accent-400: #dfab63; --color-accent-500: #d08a2c; --color-accent-600: #ac7124; --color-accent-700: #85571c; --color-accent-800: #5d3d15; --color-accent-900: #38260e; --color-accent-2-100: #f3f5f5; --color-accent-2-200: #e2e6e7; --color-accent-2-300: #c8ced0; --color-accent-2-400: #a9b1b5; --color-accent-2-500: #8f9ba0; --color-accent-2-600: #737d81; --color-accent-2-700: #586064; --color-accent-2-800: #3e4447; --color-accent-2-900: #282c2e; --radius-sm: 1px; --radius-md: 2px; --radius-lg: 2px; --font-heading: 'Archivo Narrow', 'Inter', sans-serif; --font-mono: 'IBM Plex Mono', ui-monospace, monospace; --shadow-sm: 0 0 0 1px #3c4043; --shadow-md: 0 0 0 1px #55595d, 0 4px 14px rgba(0,0,0,0.5); --shadow-lg: 0 0 0 1px #8d9295, 0 14px 36px rgba(0,0,0,0.6); min-height: 100vh; background: var(--color-bg); background-image: linear-gradient(color-mix(in srgb, #dcdedd 4%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, #dcdedd 4%, transparent) 1px, transparent 1px); background-size: 56px 56px, 56px 56px; color: var(--color-text); padding-bottom: 56px">
+
+  <div class="nav" style="display: flex; flex-wrap: wrap; align-items: center; gap: 16.8px; padding: 11.2px 22.4px; position: sticky; top: 0; z-index: 5; background: color-mix(in srgb, var(--color-bg) 94%, transparent); backdrop-filter: blur(8px); border-top: 2px solid var(--color-accent); border-bottom: 1px solid var(--color-divider)">
+    <div class="nav-brand" style="margin-right: auto; display: flex; align-items: baseline; gap: 11.2px">
+      <span style="font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700">Ludoteca</span>
+      <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--color-neutral-500)">inventario · 001</span>
+    </div>
+    <nav style="display: flex; flex-wrap: wrap; gap: 2.8px">
+      <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="5">
+        <button class="btn" onClick="{{ tab.go }}" aria-current="{{ tab.current }}" style="border-color: transparent; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text); opacity: 0.55" style-hover="background: color-mix(in srgb, var(--color-text) 7%, transparent); opacity: 1">
+          <span>{{ tab.label }}</span>
+          <span style="font-size: 10px; opacity: 0.6; margin-left: 4.2px">{{ tab.count }}</span>
+        </button>
+      </sc-for>
+    </nav>
+    <button class="btn btn-primary" onClick="{{ openAdd }}">Añadir juego</button>
+  </div>
+
+  <div style="max-width: 1180px; margin: 0 auto; padding: 0 22.4px">
+
+    <sc-if value="{{ isCollection }}" hint-placeholder-val="{{ true }}">
+      <section style="animation: riseIn 0.25s ease both">
+        <div style="display: flex; flex-wrap: wrap; gap: 11.2px; margin: 22.4px 0 8.4px">
+          <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+            <div class="card" style="flex: 1 1 180px; gap: 5.6px; padding: 16.8px; border: 1px solid var(--color-neutral-800); border-left: 2px solid var(--color-accent-700); box-shadow: none">
+              <span style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-neutral-500)">{{ s.label }}</span>
+              <span style="font-family: var(--font-mono); font-weight: 500; font-size: 28px; line-height: 1.05; letter-spacing: -0.01em">{{ s.value }}</span>
+              <span style="font-size: 11px; color: color-mix(in srgb, var(--color-text) 50%, transparent)">{{ s.hint }}</span>
+            </div>
+          </sc-for>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 11.2px; margin: 22.4px 0 16.8px">
+          <div class="field" style="flex: 1 1 240px">
+            <label for="q">Buscar</label>
+            <input id="q" class="input" type="search" placeholder="Nombre o editorial" value="{{ query }}" onChange="{{ onQuery }}">
+          </div>
+          <div class="field">
+            <label for="tipo">Tipo</label>
+            <select id="tipo" class="input" style="min-width: 150px" value="{{ tipoFilter }}" onChange="{{ onTipo }}">
+              <sc-for list="{{ tipoOptions }}" as="t" hint-placeholder-count="4">
+                <option value="{{ t }}">{{ t }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <div class="field">
+            <label for="orden">Orden</label>
+            <select id="orden" class="input" style="min-width: 150px" value="{{ sort }}" onChange="{{ onSort }}">
+              <option value="nombre">Nombre</option>
+              <option value="puntuacion">Puntuación</option>
+              <option value="precio">Precio</option>
+              <option value="partidas">Más jugados</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 11.2px">
+          <sc-for list="{{ visibleGames }}" as="g" hint-placeholder-count="6">
+            <div class="card" onClick="{{ g.open }}" role="button" tabindex="0" style="cursor: pointer; gap: 11.2px; padding: 0; border: 1px solid var(--color-neutral-800); box-shadow: none" style-hover="border-color: var(--color-accent-700)">
+              <div style="position: relative; width: 100%; height: 170px; border-bottom: 1px solid var(--color-neutral-800); background: var(--color-neutral-900)">
+                <image-slot id="{{ g.slotId }}" shape="rect" fit="cover" placeholder="{{ g.slotHint }}"></image-slot>
+              </div>
+              <div style="display: flex; gap: 11.2px; align-items: flex-start; padding: 0 14px">
+                <div style="flex: 1; min-width: 0">
+                  <div class="card-title" style="text-wrap: pretty; text-transform: uppercase; letter-spacing: 0.02em; font-size: 15px">{{ g.nombre }}</div>
+                  <div style="font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent)">{{ g.editorial }}</div>
+                </div>
+                <div style="text-align: right; flex: none">
+                  <div style="font-family: var(--font-mono); font-weight: 500; font-size: 17px; color: var(--color-accent-300)">{{ g.puntuacion }}</div>
+                  <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.1em; opacity: 0.45">/10</div>
+                </div>
+              </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 5.6px; align-items: center; padding: 0 14px">
+                <span class="tag tag-outline" style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; border-color: var(--color-accent-700); color: var(--color-accent-300)">{{ g.tipo }}</span>
+                <span class="tag tag-outline" style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; border-color: var(--color-neutral-700); color: var(--color-neutral-400)">{{ g.jugadores }}</span>
+                <span class="tag tag-outline" style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; border-color: var(--color-neutral-700); color: var(--color-neutral-400)">{{ g.duracion }}</span>
+              </div>
+              <div class="card-meta" style="justify-content: space-between; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; border-top: 1px solid var(--color-neutral-800); padding: 8.4px 14px 14px">
+                <span>{{ g.playsLabel }}</span>
+                <span>{{ g.precioLabel }}</span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+          <p class="text-muted" style="padding: 33.6px 0; text-align: center">Ningún juego coincide con la búsqueda.</p>
+        </sc-if>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isPlays }}" hint-placeholder-val="{{ false }}">
+      <section style="animation: riseIn 0.25s ease both">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 11.2px; margin: 22.4px 0 16.8px">
+          <h3 style="margin: 0; margin-right: auto; text-transform: uppercase; letter-spacing: 0.12em">Partidas</h3>
+          <button class="btn btn-primary" onClick="{{ openPlay }}">Registrar partida</button>
+        </div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Juego</th>
+              <th>Jugadores</th>
+              <th>Ganador</th>
+              <th style="text-align: right">Duración</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{ playRows }}" as="p" hint-placeholder-count="6">
+              <tr>
+                <td style="white-space: nowrap; font-family: var(--font-mono); font-size: 12px; color: var(--color-neutral-500)">{{ p.fecha }}</td>
+                <td style="font-family: var(--font-heading); text-transform: uppercase; letter-spacing: 0.02em">{{ p.juego }}</td>
+                <td style="color: color-mix(in srgb, var(--color-text) 70%, transparent)">{{ p.jugadores }}</td>
+                <td><span class="tag tag-outline" style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; border-color: var(--color-accent-700); color: var(--color-accent-300)">{{ p.ganador }}</span></td>
+                <td style="text-align: right; white-space: nowrap; font-family: var(--font-mono); font-size: 12px">{{ p.duracion }}</td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isPlayers }}" hint-placeholder-val="{{ false }}">
+      <section style="animation: riseIn 0.25s ease both">
+        <h3 style="margin: 22.4px 0 16.8px; text-transform: uppercase; letter-spacing: 0.12em">Jugadores</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 11.2px">
+          <sc-for list="{{ playerRows }}" as="pl" hint-placeholder-count="4">
+            <div class="card" style="gap: 11.2px; border: 1px solid var(--color-neutral-800); box-shadow: none">
+              <div style="display: flex; align-items: center; gap: 11.2px">
+                <div style="width: 36px; height: 36px; display: grid; place-items: center; font-family: var(--font-mono); font-size: 14px; border: 1px solid var(--color-neutral-700); background: var(--color-neutral-900); color: var(--color-neutral-300)">{{ pl.initial }}</div>
+                <div>
+                  <div class="card-title" style="text-transform: uppercase; letter-spacing: 0.03em">{{ pl.nombre }}</div>
+                  <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-500)">{{ pl.played }}</div>
+                </div>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 5.6px">
+                  <span style="color: var(--color-neutral-500)">Victorias</span>
+                  <span>{{ pl.winLabel }}</span>
+                </div>
+                <div style="height: 6px; background: var(--color-neutral-900); border: 1px solid var(--color-neutral-800); overflow: hidden">
+                  <div style="height: 100%; background: repeating-linear-gradient(45deg, var(--color-accent) 0 4px, var(--color-accent-700) 4px 8px); width: {{ pl.winPct }}"></div>
+                </div>
+              </div>
+              <div class="card-meta" style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase">Favorito: {{ pl.favorito }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isWishlist }}" hint-placeholder-val="{{ false }}">
+      <section style="animation: riseIn 0.25s ease both">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 11.2px; margin: 22.4px 0 16.8px">
+          <h3 style="margin: 0; margin-right: auto; text-transform: uppercase; letter-spacing: 0.12em">Lista de deseos</h3>
+          <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-500)">{{ wishTotal }} pendiente</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8.4px">
+          <sc-for list="{{ wishRows }}" as="w" hint-placeholder-count="3">
+            <div class="card" style="flex-direction: row; align-items: center; gap: 16.8px; flex-wrap: wrap; border: 1px solid var(--color-neutral-800); box-shadow: none">
+              <div style="flex: 1 1 200px; min-width: 0">
+                <div class="card-title" style="text-transform: uppercase; letter-spacing: 0.03em">{{ w.nombre }}</div>
+                <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-500)">{{ w.editorial }}</div>
+              </div>
+              <span class="tag tag-outline" style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; border-color: var(--color-neutral-700); color: var(--color-neutral-400)">{{ w.prioridad }}</span>
+              <span style="font-family: var(--font-mono); font-weight: 500; font-size: 15px; min-width: 74px; text-align: right">{{ w.precioLabel }}</span>
+              <button class="btn btn-secondary" onClick="{{ w.buy }}">Ya lo tengo</button>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+    <sc-if value="{{ isLoans }}" hint-placeholder-val="{{ false }}">
+      <section style="animation: riseIn 0.25s ease both">
+        <h3 style="margin: 22.4px 0 16.8px; text-transform: uppercase; letter-spacing: 0.12em">Préstamos</h3>
+        <div style="display: flex; flex-direction: column; gap: 8.4px">
+          <sc-for list="{{ loanRows }}" as="l" hint-placeholder-count="2">
+            <div class="card" style="flex-direction: row; align-items: center; gap: 16.8px; flex-wrap: wrap; border: 1px solid var(--color-neutral-800); box-shadow: none">
+              <div style="flex: 1 1 200px; min-width: 0">
+                <div class="card-title" style="text-transform: uppercase; letter-spacing: 0.03em">{{ l.juego }}</div>
+                <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-neutral-500)">En casa de {{ l.persona }}</div>
+              </div>
+              <span class="tag {{ l.tagClass }}" style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase">{{ l.dias }}</span>
+              <button class="btn btn-secondary" onClick="{{ l.back }}">Devuelto</button>
+            </div>
+          </sc-for>
+          <sc-if value="{{ noLoans }}" hint-placeholder-val="{{ false }}">
+            <p class="text-muted" style="padding: 22.4px 0">Ahora mismo no has prestado nada.</p>
+          </sc-if>
+        </div>
+      </section>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ showAdd }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop">
+      <div class="dialog" style="width: min(520px, 100%)">
+        <div class="dialog-title" style="text-transform: uppercase; letter-spacing: 0.1em">Añadir juego</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 11.2px">
+          <div class="field" style="grid-column: 1 / -1">
+            <label for="f-nombre">Nombre</label>
+            <input id="f-nombre" class="input" name="nombre" value="{{ form.nombre }}" onChange="{{ onForm }}" placeholder="Ej. Brass: Birmingham">
+          </div>
+          <div class="field">
+            <label for="f-editorial">Editorial</label>
+            <input id="f-editorial" class="input" name="editorial" value="{{ form.editorial }}" onChange="{{ onForm }}">
+          </div>
+          <div class="field">
+            <label for="f-tipo">Tipo</label>
+            <select id="f-tipo" class="input" name="tipo" value="{{ form.tipo }}" onChange="{{ onForm }}">
+              <sc-for list="{{ tipos }}" as="t" hint-placeholder-count="5">
+                <option value="{{ t }}">{{ t }}</option>
+              </sc-for>
+            </select>
+          </div>
+          <div class="field">
+            <label for="f-punt">Puntuación (0-10)</label>
+            <input id="f-punt" class="input" name="puntuacion" type="number" min="0" max="10" step="0.1" value="{{ form.puntuacion }}" onChange="{{ onForm }}">
+          </div>
+          <div class="field">
+            <label for="f-precio">Precio pagado</label>
+            <input id="f-precio" class="input" name="precio" type="number" min="0" step="1" value="{{ form.precio }}" onChange="{{ onForm }}">
+          </div>
+          <div class="field">
+            <label for="f-jug">Jugadores</label>
+            <input id="f-jug" class="input" name="jugadores" value="{{ form.jugadores }}" onChange="{{ onForm }}" placeholder="2-4">
+          </div>
+          <div class="field">
+            <label for="f-dur">Duración</label>
+            <input id="f-dur" class="input" name="duracion" value="{{ form.duracion }}" onChange="{{ onForm }}" placeholder="60 min">
+          </div>
+        </div>
+        <sc-if value="{{ formError }}" hint-placeholder-val="{{ false }}">
+          <div style="font-size: 12px; color: var(--color-accent-300)">Pon al menos un nombre.</div>
+        </sc-if>
+        <div class="dialog-actions">
+          <button class="btn btn-secondary" onClick="{{ closeDialog }}">Cancelar</button>
+          <button class="btn btn-primary" onClick="{{ saveGame }}">Guardar</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showPlay }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop">
+      <div class="dialog">
+        <div class="dialog-title" style="text-transform: uppercase; letter-spacing: 0.1em">Registrar partida</div>
+        <div class="field">
+          <label for="p-juego">Juego</label>
+          <select id="p-juego" class="input" name="gameId" value="{{ playForm.gameId }}" onChange="{{ onPlayForm }}">
+            <sc-for list="{{ gameOptions }}" as="o" hint-placeholder-count="6">
+              <option value="{{ o.id }}">{{ o.nombre }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <div class="field">
+          <label>Quién jugó</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 5.6px">
+            <sc-for list="{{ playerChips }}" as="c" hint-placeholder-count="4">
+              <button class="btn" onClick="{{ c.toggle }}" style="font-size: 13px; padding: 5.6px 11.2px; border-color: {{ c.border }}; color: {{ c.color }}">{{ c.nombre }}</button>
+            </sc-for>
+          </div>
+        </div>
+        <div class="field">
+          <label for="p-gan">Ganador</label>
+          <select id="p-gan" class="input" name="ganador" value="{{ playForm.ganador }}" onChange="{{ onPlayForm }}">
+            <sc-for list="{{ selectedPlayers }}" as="sp" hint-placeholder-count="3">
+              <option value="{{ sp }}">{{ sp }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <div class="field">
+          <label for="p-dur">Duración (min)</label>
+          <input id="p-dur" class="input" name="duracion" type="number" min="5" step="5" value="{{ playForm.duracion }}" onChange="{{ onPlayForm }}">
+        </div>
+        <div class="dialog-actions">
+          <button class="btn btn-secondary" onClick="{{ closeDialog }}">Cancelar</button>
+          <button class="btn btn-primary" onClick="{{ savePlay }}">Guardar partida</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ detail }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop">
+      <div class="dialog" style="width: min(480px, 100%)">
+        <div style="display: flex; gap: 11.2px; align-items: flex-start">
+          <div style="width: 96px; height: 130px; flex: none; position: relative; border: 1px solid var(--color-neutral-700); background: var(--color-neutral-900)">
+            <image-slot id="{{ detail.slotId }}" shape="rect" fit="cover" placeholder="Carátula"></image-slot>
+          </div>
+          <div style="flex: 1">
+            <div class="dialog-title" style="text-transform: uppercase; letter-spacing: 0.05em">{{ detail.nombre }}</div>
+            <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-neutral-500)">{{ detail.editorial }}</div>
+          </div>
+          <button class="btn btn-icon btn-secondary" onClick="{{ closeDialog }}" aria-label="Cerrar">✕</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 11.2px; margin-top: 5.6px">
+          <sc-for list="{{ detail.facts }}" as="f" hint-placeholder-count="6">
+            <div style="border-top: 1px solid var(--color-neutral-800); padding-top: 5.6px">
+              <div style="font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-neutral-500)">{{ f.label }}</div>
+              <div style="font-family: var(--font-mono); font-weight: 500; font-size: 15px">{{ f.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div class="dialog-actions" style="justify-content: space-between">
+          <button class="btn btn-ghost" onClick="{{ detail.remove }}">Quitar de la colección</button>
+          <button class="btn btn-primary" onClick="{{ detail.play }}">Registrar partida</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;moneda&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;€&quot;,&quot;$&quot;,&quot;£&quot;],&quot;default&quot;:&quot;€&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;mostrarPrecios&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const GAMES = [
+  { id: 1, nombre: "Brass: Birmingham", editorial: "Maldito Games", tipo: "Eurogame", puntuacion: 9.2, precio: 62, jugadores: "2-4", duracion: "120 min" },
+  { id: 2, nombre: "Ark Nova", editorial: "Maldito Games", tipo: "Eurogame", puntuacion: 9.0, precio: 75, jugadores: "1-4", duracion: "150 min" },
+  { id: 3, nombre: "Wingspan", editorial: "Maldito Games", tipo: "Eurogame", puntuacion: 8.1, precio: 55, jugadores: "1-5", duracion: "60 min" },
+  { id: 4, nombre: "Azul", editorial: "Next Move", tipo: "Abstracto", puntuacion: 7.9, precio: 32, jugadores: "2-4", duracion: "35 min" },
+  { id: 5, nombre: "Pandemic Legacy: Temporada 1", editorial: "Devir", tipo: "Legacy / campaña", puntuacion: 8.8, precio: 70, jugadores: "2-4", duracion: "60 min" },
+  { id: 6, nombre: "7 Wonders Duel", editorial: "Repos", tipo: "Eurogame", puntuacion: 8.4, precio: 28, jugadores: "2", duracion: "30 min" },
+  { id: 7, nombre: "Codenames", editorial: "Devir", tipo: "Party", puntuacion: 7.5, precio: 22, jugadores: "4-8", duracion: "20 min" },
+  { id: 8, nombre: "Terraforming Mars", editorial: "Maldito Games", tipo: "Eurogame", puntuacion: 8.6, precio: 68, jugadores: "1-5", duracion: "150 min" },
+  { id: 9, nombre: "Los Aventureros al Tren", editorial: "Days of Wonder", tipo: "Familiar", puntuacion: 7.2, precio: 45, jugadores: "2-5", duracion: "50 min" },
+  { id: 10, nombre: "Everdell", editorial: "Maldito Games", tipo: "Eurogame", puntuacion: 8.3, precio: 58, jugadores: "1-4", duracion: "80 min" },
+  { id: 11, nombre: "Just One", editorial: "Asmodee", tipo: "Party", puntuacion: 7.4, precio: 20, jugadores: "3-7", duracion: "20 min" },
+  { id: 12, nombre: "Spirit Island", editorial: "Arrakis Games", tipo: "Cooperativo", puntuacion: 8.9, precio: 72, jugadores: "1-4", duracion: "120 min" },
+  { id: 13, nombre: "Patchwork", editorial: "Lookout", tipo: "Abstracto", puntuacion: 7.7, precio: 30, jugadores: "2", duracion: "30 min" },
+  { id: 14, nombre: "Sushi Go Party", editorial: "Devir", tipo: "Filler", puntuacion: 7.0, precio: 25, jugadores: "2-8", duracion: "25 min" }
+];
+
+const PLAYS = [
+  { id: 1, gameId: 1, fecha: "2026-08-16", jugadores: ["Ana", "Marta", "Luis"], ganador: "Ana", duracion: 135 },
+  { id: 2, gameId: 6, fecha: "2026-08-14", jugadores: ["Ana", "Luis"], ganador: "Luis", duracion: 35 },
+  { id: 3, gameId: 12, fecha: "2026-08-09", jugadores: ["Ana", "Marta", "Javi"], ganador: "Marta", duracion: 110 },
+  { id: 4, gameId: 3, fecha: "2026-08-03", jugadores: ["Ana", "Marta", "Javi", "Luis"], ganador: "Javi", duracion: 65 },
+  { id: 5, gameId: 7, fecha: "2026-07-27", jugadores: ["Ana", "Marta", "Javi", "Luis"], ganador: "Marta", duracion: 25 },
+  { id: 6, gameId: 2, fecha: "2026-07-19", jugadores: ["Ana", "Luis"], ganador: "Ana", duracion: 160 },
+  { id: 7, gameId: 8, fecha: "2026-07-11", jugadores: ["Ana", "Javi"], ganador: "Ana", duracion: 145 }
+];
+
+class Component extends DCLogic {
+  state = {
+    view: "coleccion",
+    games: GAMES,
+    plays: PLAYS,
+    wishlist: [
+      { id: 101, nombre: "Dune: Imperium — Uprising", editorial: "Dire Wolf", precio: 65, prioridad: "Alta" },
+      { id: 102, nombre: "Concordia", editorial: "Maldito Games", precio: 52, prioridad: "Media" },
+      { id: 103, nombre: "Cascadia", editorial: "Maldito Games", precio: 38, prioridad: "Baja" }
+    ],
+    loans: [
+      { id: 201, gameId: 4, persona: "Marta", dias: 12 },
+      { id: 202, gameId: 11, persona: "Javi", dias: 47 }
+    ],
+    query: "",
+    tipoFilter: "Todos",
+    sort: "nombre",
+    dialog: null,
+    detailId: null,
+    formError: false,
+    form: { nombre: "", editorial: "", tipo: "Estrategia", puntuacion: "8", precio: "", jugadores: "", duracion: "" },
+    playForm: { gameId: "1", ganador: "Ana", duracion: "60", jugadores: ["Ana", "Marta"] }
+  };
+
+  money(n) {
+    const cur = this.props.moneda ?? "€";
+    return Math.round(Number(n) || 0).toLocaleString("es-ES") + " " + cur;
+  }
+  initials(name) {
+    return name.replace(/[^\p{L}\p{N} ]/gu, " ").trim().split(/\s+/).slice(0, 2).map(w => w[0].toUpperCase()).join("");
+  }
+  playersAll() {
+    const set = new Set();
+    this.state.plays.forEach(p => p.jugadores.forEach(j => set.add(j)));
+    return [...set];
+  }
+  playCount(gameId) { return this.state.plays.filter(p => p.gameId === gameId).length; }
+  set(patch) { this.setState(patch); }
+
+  renderVals() {
+    const st = this.state;
+    const showPrices = this.props.mostrarPrecios ?? true;
+    const counts = {
+      coleccion: st.games.length, partidas: st.plays.length,
+      jugadores: this.playersAll().length, deseos: st.wishlist.length, prestamos: st.loans.length
+    };
+    const tabs = [
+      ["coleccion", "Colección"], ["partidas", "Partidas"], ["jugadores", "Jugadores"],
+      ["deseos", "Deseos"], ["prestamos", "Préstamos"]
+    ].map(([id, label]) => ({
+      label, count: counts[id], current: st.view === id ? "page" : undefined,
+      go: () => this.set({ view: id })
+    }));
+
+    const q = st.query.trim().toLowerCase();
+    let list = st.games.filter(g =>
+      (st.tipoFilter === "Todos" || g.tipo === st.tipoFilter) &&
+      (!q || g.nombre.toLowerCase().includes(q) || g.editorial.toLowerCase().includes(q)));
+    const sorters = {
+      nombre: (a, b) => a.nombre.localeCompare(b.nombre, "es"),
+      puntuacion: (a, b) => b.puntuacion - a.puntuacion,
+      precio: (a, b) => b.precio - a.precio,
+      partidas: (a, b) => this.playCount(b.id) - this.playCount(a.id)
+    };
+    list = [...list].sort(sorters[st.sort]);
+
+    const total = st.games.reduce((s, g) => s + g.precio, 0);
+    const media = st.games.length ? total / st.games.length : 0;
+    const stats = [
+      { label: "Juegos", value: String(st.games.length), hint: st.wishlist.length + " en la lista de deseos" },
+      { label: "Valor total", value: showPrices ? this.money(total) : "—", hint: "Precio pagado, sin envíos" },
+      { label: "Partidas", value: String(st.plays.length), hint: "Registradas este año" },
+      { label: "Precio medio", value: showPrices ? this.money(media) : "—", hint: "Por juego de la colección" }
+    ];
+
+    const players = this.playersAll().map(n => {
+      const mine = st.plays.filter(p => p.jugadores.includes(n));
+      const wins = mine.filter(p => p.ganador === n).length;
+      const fav = {};
+      mine.forEach(p => { fav[p.gameId] = (fav[p.gameId] || 0) + 1; });
+      const favId = Object.keys(fav).sort((a, b) => fav[b] - fav[a])[0];
+      const favGame = st.games.find(g => String(g.id) === String(favId));
+      return {
+        nombre: n, initial: n[0], played: mine.length + " partidas",
+        winLabel: wins + " de " + mine.length,
+        winPct: (mine.length ? Math.round((wins / mine.length) * 100) : 0) + "%",
+        favorito: favGame ? favGame.nombre : "—"
+      };
+    }).sort((a, b) => b.played.localeCompare(a.played));
+
+    const detailGame = st.games.find(g => g.id === st.detailId);
+    const detail = detailGame ? {
+      nombre: detailGame.nombre, editorial: detailGame.editorial, initials: this.initials(detailGame.nombre),
+      slotId: "cover-" + detailGame.id,
+      facts: [
+        { label: "Tipo", value: detailGame.tipo },
+        { label: "Puntuación", value: detailGame.puntuacion + " / 10" },
+        { label: "Jugadores", value: detailGame.jugadores },
+        { label: "Duración", value: detailGame.duracion },
+        { label: "Precio", value: showPrices ? this.money(detailGame.precio) : "—" },
+        { label: "Partidas", value: String(this.playCount(detailGame.id)) }
+      ],
+      remove: () => this.setState(s => ({ games: s.games.filter(g => g.id !== detailGame.id), detailId: null })),
+      play: () => this.setState(s => ({ detailId: null, dialog: "play", playForm: { ...s.playForm, gameId: String(detailGame.id) } }))
+    } : null;
+
+    const chips = this.playersAll().map(n => {
+      const on = st.playForm.jugadores.includes(n);
+      return {
+        nombre: n,
+        border: on ? "var(--color-accent)" : "var(--color-divider)",
+        color: on ? "var(--color-accent)" : "var(--color-text)",
+        toggle: () => this.setState(s => {
+          const sel = on ? s.playForm.jugadores.filter(x => x !== n) : [...s.playForm.jugadores, n];
+          const gan = sel.includes(s.playForm.ganador) ? s.playForm.ganador : (sel[0] || "");
+          return { playForm: { ...s.playForm, jugadores: sel, ganador: gan } };
+        })
+      };
+    });
+
+    return {
+      tabs,
+      isCollection: st.view === "coleccion", isPlays: st.view === "partidas",
+      isPlayers: st.view === "jugadores", isWishlist: st.view === "deseos", isLoans: st.view === "prestamos",
+      stats,
+      query: st.query, tipoFilter: st.tipoFilter, sort: st.sort,
+      tipoOptions: ["Todos", ...new Set(st.games.map(g => g.tipo))],
+      tipos: ["Eurogame", "Ameritrash / temático", "Abstracto", "Familiar", "Filler", "Party", "Cooperativo", "Deducción social", "Legacy / campaña", "Construcción de mazos", "Wargame"],
+      onQuery: e => this.set({ query: e.target.value }),
+      onTipo: e => this.set({ tipoFilter: e.target.value }),
+      onSort: e => this.set({ sort: e.target.value }),
+      noResults: list.length === 0,
+      visibleGames: list.map(g => ({
+        ...g,
+        initials: this.initials(g.nombre),
+        slotId: "cover-" + g.id,
+        slotHint: "Arrastra la carátula",
+        precioLabel: showPrices ? this.money(g.precio) : "",
+        playsLabel: this.playCount(g.id) === 1 ? "1 partida" : this.playCount(g.id) + " partidas",
+        open: () => this.set({ detailId: g.id })
+      })),
+      playRows: [...st.plays].sort((a, b) => b.fecha.localeCompare(a.fecha)).map(p => {
+        const g = st.games.find(x => x.id === p.gameId);
+        return {
+          fecha: new Date(p.fecha).toLocaleDateString("es-ES", { day: "2-digit", month: "short", year: "numeric" }),
+          juego: g ? g.nombre : "—", jugadores: p.jugadores.join(", "),
+          ganador: p.ganador, duracion: p.duracion + " min"
+        };
+      }),
+      playerRows: players,
+      wishTotal: this.money(st.wishlist.reduce((s, w) => s + w.precio, 0)),
+      wishRows: st.wishlist.map(w => ({
+        ...w, precioLabel: showPrices ? this.money(w.precio) : "—",
+        buy: () => this.setState(s => ({
+          wishlist: s.wishlist.filter(x => x.id !== w.id),
+          games: [...s.games, {
+            id: Date.now(), nombre: w.nombre, editorial: w.editorial, tipo: "Eurogame",
+            puntuacion: 0, precio: w.precio, jugadores: "1-4", duracion: "60 min"
+          }],
+          view: "coleccion"
+        }))
+      })),
+      noLoans: st.loans.length === 0,
+      loanRows: st.loans.map(l => {
+        const g = st.games.find(x => x.id === l.gameId);
+        return {
+          juego: g ? g.nombre : "Juego retirado", persona: l.persona,
+          dias: l.dias + " días fuera", tagClass: l.dias > 30 ? "tag-accent" : "tag-neutral",
+          back: () => this.setState(s => ({ loans: s.loans.filter(x => x.id !== l.id) }))
+        };
+      }),
+      showAdd: st.dialog === "add", showPlay: st.dialog === "play", detail,
+      openAdd: () => this.set({ dialog: "add", formError: false, view: "coleccion" }),
+      openPlay: () => this.set({ dialog: "play" }),
+      closeDialog: () => this.set({ dialog: null, detailId: null }),
+      form: st.form, formError: st.formError,
+      onForm: e => this.setState(s => ({ form: { ...s.form, [e.target.name]: e.target.value }, formError: false })),
+      saveGame: () => {
+        const f = st.form;
+        if (!f.nombre.trim()) return this.set({ formError: true });
+        this.setState(s => ({
+          games: [...s.games, {
+            id: Date.now(), nombre: f.nombre.trim(),
+            editorial: f.editorial.trim() || "Sin editorial", tipo: f.tipo,
+            puntuacion: Number(f.puntuacion) || 0, precio: Number(f.precio) || 0,
+            jugadores: f.jugadores.trim() || "2-4", duracion: f.duracion.trim() || "60 min"
+          }],
+          dialog: null, query: "",
+          form: { nombre: "", editorial: "", tipo: "Estrategia", puntuacion: "8", precio: "", jugadores: "", duracion: "" }
+        }));
+      },
+      playForm: st.playForm,
+      gameOptions: [...st.games].sort((a, b) => a.nombre.localeCompare(b.nombre, "es")),
+      playerChips: chips,
+      selectedPlayers: st.playForm.jugadores,
+      onPlayForm: e => this.setState(s => ({ playForm: { ...s.playForm, [e.target.name]: e.target.value } })),
+      savePlay: () => {
+        const f = st.playForm;
+        if (!f.jugadores.length) return;
+        this.setState(s => ({
+          plays: [...s.plays, {
+            id: Date.now(), gameId: Number(f.gameId),
+            fecha: new Date().toISOString().slice(0, 10),
+            jugadores: f.jugadores, ganador: f.ganador || f.jugadores[0],
+            duracion: Number(f.duracion) || 60
+          }],
+          dialog: null, view: "partidas"
+        }));
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>
