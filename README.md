@@ -148,12 +148,14 @@ búsqueda (MakerWorld no tiene API pública), así que no depende de ninguna cue
 
 El botón "🎲 Juego aleatorio" de la pestaña Colección pregunta de qué tipo lo quieres
 (incluye "Todos") y hace girar un carrusel con carátulas de la colección — empieza
-rápido y frena hasta detenerse justo en el resultado, marcado con un recuadro en el
-centro. El sorteo elige el juego al azar entre los que coincidan con el tipo elegido
-antes de empezar a girar (la animación no decide nada: solo "cuenta" hasta llegar ahí),
-así que siempre acaba en un juego que existe en tu colección. Desde el resultado puedes
-"Ver ficha" (abre su detalle normal), "Girar otra vez" o cerrar. Si no tienes ningún
-juego de ese tipo, avisa en vez de girar.
+rápido y frena hasta detenerse justo en el centro, marcado con un marco dorado. El
+sorteo elige el juego al azar entre los que coincidan con el tipo elegido antes de
+empezar a girar (la animación no decide nada: solo "cuenta" hasta llegar ahí), así que
+siempre acaba en un juego que existe en tu colección — pero no hay ningún aviso de
+texto anunciándolo: el propio marco centrado sobre la carátula (con su nombre debajo)
+es la única señal de cuál ha salido, para que sea el carrusel el que se lleve toda la
+atención. Debajo quedan "Ver ficha" (abre su detalle normal), "Girar otra vez" o
+cerrar. Si no tienes ningún juego de ese tipo, avisa en vez de girar.
 
 Los tipos de juego (`includes/helpers.php`, constante `LUDOTECA_TIPOS`) incluyen
 Eurogame, Ameritrash/temático, Abstracto, Familiar, Filler, Party, Deducción social,
@@ -289,7 +291,7 @@ como algo dirigido a ellos en persona.
 
 ## 💾 Copia de seguridad
 
-El número de versión de la cabecera (`v1.9.2`) es también un enlace "oculto": para quien
+El número de versión de la cabecera (`v1.9.4`) es también un enlace "oculto": para quien
 puede gestionar la colección (admin/coleccionista), pulsarlo descarga un `.sql` con el
 esquema completo (`CREATE TABLE IF NOT EXISTS`) más todos los datos como `INSERT`
 (`backup.php` / `includes/backup.php`) — restaurable directamente con
@@ -406,6 +408,8 @@ personal normal, lo más sencillo sigue siendo la instalación descrita en
 
 | Versión | Resumen |
 |---|---|
+| **1.9.4** | Corrección: en el "Juego aleatorio", el resultado era literalmente la última carátula de la cinta, así que a su derecha no había nada y parecía que se había acabado la lista — ahora hay carátulas de más después del resultado, para que el carrusel siga viéndose "vivo" a los dos lados de donde para. |
+| **1.9.3** | Corrección: editar un juego sin tocar el buscador de BGG borraba su carátula. El "Juego aleatorio" ya no anuncia el resultado con texto — el marco (ahora dorado) centrado sobre la carátula es la única señal de cuál ha salido. |
 | **1.9.2** | Corrección: el diálogo de "Juego aleatorio" podía renderizarse fuera de la pantalla (un `<div>` con contenido muy ancho inflaba la rejilla que lo centraba). |
 | **1.9.1** | Corrección: el carrusel del "Juego aleatorio" no se deslizaba — saltaba directo al resultado en vez de animarse. |
 | **1.9.0** | Tres tipos de juego nuevos (Juegos Rol, Roll&Write, Colocación de losetas) y la función **Juego aleatorio**: un carrusel de carátulas que gira y frena hasta un resultado. |

@@ -99,6 +99,7 @@
     return {
       nombre: '', editorial: '', tipo: 'Eurogame', puntuacion: '8', precio: '', jugadores: '', duracion: '',
       edad_minima: '', premium: false, es_expansion: false, base_game_id: '',
+      imagen_url: null, bgg_id: null,
     };
   }
   function emptyWishForm() {
@@ -127,6 +128,10 @@
   const REEL_GAP = 11.2;
   const REEL_STEP = REEL_ITEM_W + REEL_GAP;
   const REEL_FILLER_COUNT = 36;
+  // Carátulas de más después del resultado: si no, el ganador queda como el último
+  // elemento de la cinta y, al centrarlo, a su derecha no hay nada — parece que se ha
+  // acabado la lista en vez de que el carrusel haya parado en medio de una tira larga.
+  const REEL_TRAILING_COUNT = 10;
   const REEL_SPIN_MS = 3600;
 
   const AGE_BUCKETS = [
@@ -874,11 +879,7 @@
             </div>
           </div>
           ${spin.phase === 'done' ? `
-            <div class="random-result">
-              <div class="row-title" style="font-size:19px">¡Te ha tocado <strong>${esc(spin.resultGame.nombre)}</strong>!</div>
-              <div class="row-sub">${esc(spin.resultGame.editorial)}</div>
-            </div>
-            <div class="dialog-actions">
+            <div class="dialog-actions" style="margin-top:16.8px">
               <button class="btn btn-secondary" data-action="close-dialog">Cerrar</button>
               <button class="btn btn-secondary" data-action="random-again">Girar otra vez</button>
               <button class="btn btn-primary" data-action="random-view" data-id="${spin.resultGame.id}">Ver ficha</button>
@@ -899,7 +900,7 @@
     const viewport = document.getElementById('reel-viewport');
     const spin = state.randomSpin;
     if (!track || !viewport || !spin) return;
-    const targetIndex = spin.reel.length - 1;
+    const targetIndex = spin.targetIndex;
     const targetCenter = targetIndex * REEL_STEP + REEL_ITEM_W / 2;
     const translateX = targetCenter - viewport.clientWidth / 2;
     spin.translateX = translateX;
@@ -1342,13 +1343,15 @@
       return;
     }
     try {
-      const bgg = state.bgg.picked;
       const body = {
         nombre: f.nombre, editorial: f.editorial, tipo: f.tipo,
         puntuacion: f.puntuacion, precio: f.precio, jugadores: f.jugadores, duracion: f.duracion,
         edad_minima: f.edad_minima, premium: f.premium, es_expansion: f.es_expansion,
         base_game_id: f.es_expansion && f.base_game_id ? Number(f.base_game_id) : null,
-        bgg_id: bgg ? bgg.bgg_id : null, imagen_url: bgg ? bgg.imagen_url : null,
+        // La carátula/bgg_id viven en el propio formulario (emptyGameForm/edit-game la
+        // precargan con la actual; pickBgg la sustituye solo si se elige algo nuevo),
+        // así que editar sin tocar el buscador de BGG ya no borra la carátula.
+        bgg_id: f.bgg_id, imagen_url: f.imagen_url,
       };
       if (state.editingGameId) {
         await api('api/games.php?id=' + state.editingGameId, { method: 'PUT', body: JSON.stringify(body) });
@@ -1399,6 +1402,10 @@
       if (t.duracion) targetForm.duracion = t.duracion;
       if (t.edad_minima) targetForm.edad_minima = String(t.edad_minima);
       if (t.puntuacion_bgg) targetForm.puntuacion = String(t.puntuacion_bgg);
+      // Elegir un resultado sí sustituye la carátula (es una acción explícita); no
+      // tocarla (dejar el buscador en blanco) no debe borrar la que ya hubiera.
+      targetForm.imagen_url = t.imagen_url || null;
+      targetForm.bgg_id = t.bgg_id || null;
     } catch (e) {
       state.bgg.error = e.message;
     }
@@ -1579,8 +1586,12 @@
       if (!pool.length) { state.randomError = 'No hay juegos de ese tipo en la colección.'; render(); return; }
       const resultGame = pool[Math.floor(Math.random() * pool.length)];
       const filler = Array.from({ length: REEL_FILLER_COUNT }, () => pool[Math.floor(Math.random() * pool.length)]);
+      const trailing = Array.from({ length: REEL_TRAILING_COUNT }, () => pool[Math.floor(Math.random() * pool.length)]);
       state.randomError = '';
-      state.randomSpin = { reel: [...filler, resultGame], resultGame, phase: 'spinning', animationStarted: false };
+      state.randomSpin = {
+        reel: [...filler, resultGame, ...trailing], resultGame, targetIndex: filler.length,
+        phase: 'spinning', animationStarted: false,
+      };
       render();
       return;
     }
@@ -1622,6 +1633,7 @@
         puntuacion: String(g.puntuacion), precio: String(g.precio), jugadores: g.jugadores, duracion: g.duracion,
         edad_minima: String(g.edad_minima || 0), premium: !!g.premium,
         es_expansion: !!g.es_expansion, base_game_id: g.base_game_id ? String(g.base_game_id) : '',
+        imagen_url: g.imagen_url || null, bgg_id: g.bgg_id || null,
       };
       render();
       return;
