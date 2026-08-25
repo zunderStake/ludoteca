@@ -31,7 +31,7 @@ noche cuando nadie se pone de acuerdo.
 - [💾 Copia de seguridad](#-copia-de-seguridad)
 - [🗂️ Estructura](#-estructura)
 - [🏷️ Versión y aviso de actualización](#-versión-y-aviso-de-actualización)
-- [🐳 Probar en local con Docker](#-probar-en-local-con-docker)
+- [🐳 Levantar todo con Docker](#-levantar-todo-con-docker)
 - [🔒 Notas de seguridad para producción](#-notas-de-seguridad-para-producción)
 - [📜 Historial de versiones](#-historial-de-versiones)
 
@@ -323,19 +323,70 @@ Si no coinciden, la cabecera de la app muestra "Actualizar a la versión X.X.X" 
 `update.php`; si coinciden, muestra solo "vX.X.X" en gris. Sube el número de `version.txt`
 cada vez que cambies el esquema o publiques una versión nueva.
 
-## 🐳 Probar en local con Docker
+## 🐳 Levantar todo con Docker
 
-`docker/docker-compose.yml` levanta un PHP 8.2 + Apache (con `pdo_mysql` y `curl`) y un
-MySQL 8. Desde `docker/`:
+No hace falta instalar PHP ni MySQL en tu máquina: `docker/docker-compose.yml` ya trae
+los dos contenedores que necesita la aplicación — MySQL 8 (con sus datos en un volumen,
+así que sobreviven a reinicios) y PHP 8.2 + Apache (con `pdo_mysql` y `curl`, montando
+todo el proyecto dentro) sirviendo Ludoteca.
+
+### Requisitos
+
+- [Docker](https://docs.docker.com/get-docker/) y Docker Compose (viene incluido en
+  Docker Desktop; en Linux, el paquete `docker-compose-plugin`).
+
+### Arrancar los contenedores
 
 ```bash
+cd docker
 docker compose up -d --build
 ```
 
-Abre `http://localhost:8080/install.php` y usa `db` como host de MySQL (nombre del
-servicio en la red interna de Docker) con las credenciales del `docker-compose.yml`
-(usuario/contraseña `ludoteca`). Para parar el entorno: `docker compose down` (añade
-`-v` si además quieres borrar los datos de MySQL).
+La primera vez tarda un poco (construye la imagen de PHP y descarga la de MySQL); las
+siguientes veces arranca en segundos. Compruébalo con `docker compose ps` — deberías
+ver `docker-db-1` y `docker-php-1` como `Up`.
+
+### Instalar la aplicación (solo la primera vez)
+
+1. Abre `http://localhost:8080/install.php` en el navegador.
+2. Rellena la conexión a MySQL **exactamente así** (son las credenciales que define
+   `docker-compose.yml`; si las cambias ahí, cámbialas también aquí):
+   - **Host:** `db` (es el nombre del servicio en la red interna de Docker, no `localhost`)
+   - **Puerto:** `3306`
+   - **Nombre de la base de datos:** `ludoteca`
+   - **Usuario:** `ludoteca`
+   - **Contraseña:** `ludoteca`
+3. Define la contraseña de la cuenta admin (y, si ya tienes uno, pega el token de BGG).
+4. Pulsa **Instalar**.
+5. Entra en `http://localhost:8080/login.php` con correo `admin` y esa contraseña.
+
+A partir de aquí la aplicación funciona igual que en cualquier otro sitio — Colección,
+Partidas, "Quiero jugar"... todo contra la base de datos MySQL del contenedor `db`.
+
+### Comandos útiles
+
+| Qué quieres hacer | Comando (desde `docker/`) |
+|---|---|
+| Ver qué está pasando (logs en vivo) | `docker compose logs -f php` (o `db`) |
+| Parar los contenedores sin perder datos | `docker compose down` |
+| Parar y borrar también la base de datos | `docker compose down -v` |
+| Reconstruir tras cambiar `docker/php/Dockerfile` | `docker compose up -d --build` |
+
+Los ficheros PHP/JS/CSS del proyecto están montados en vivo dentro del contenedor
+(`volumes: ..:/var/www/html` en `docker-compose.yml`), así que si editas código no hace
+falta reconstruir nada: recarga el navegador y ya está aplicado. Solo necesitas
+`--build` si cambias el propio `Dockerfile`.
+
+### Si quieres exponerlo más allá de tu máquina
+
+Este `docker-compose.yml` está pensado para uso local (contraseñas de ejemplo, MySQL
+publicado en el puerto 33061 del host, sin HTTPS). Para dejarlo accesible desde fuera de
+tu ordenador, como mínimo: cambia `MYSQL_ROOT_PASSWORD`/`MYSQL_PASSWORD` en
+`docker-compose.yml` por unas contraseñas de verdad, no publiques el puerto de MySQL
+(quita el bloque `ports` del servicio `db`, solo lo necesita `php` para conectarse por
+la red interna) y pon delante un proxy con TLS (Caddy, Traefik, nginx...). Para un uso
+personal normal, lo más sencillo sigue siendo la instalación descrita en
+[🚀 Instalación](#-instalación) sobre un hosting como Hestia.
 
 ## 🔒 Notas de seguridad para producción
 
