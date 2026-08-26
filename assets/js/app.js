@@ -645,7 +645,10 @@
                 ? `<span class="tag ${p.resultado === 'Victoria' ? 'tag-accent' : 'tag-neutral'}">${esc(p.resultado)}</span>`
                 : `<span class="tag tag-outline tag-tipo">${esc(p.ganador_nombre || '—')}</span>`}</td>
               <td class="col-duracion">${esc(p.duracion)} min</td>
-              <td><button class="btn btn-icon btn-ghost" data-action="edit-play" data-id="${p.id}" aria-label="Editar partida" title="Editar">✎</button></td>
+              <td style="white-space:nowrap">
+                <button class="btn btn-icon btn-ghost" data-action="edit-play" data-id="${p.id}" aria-label="Editar partida" title="Editar">✎</button>
+                <button class="btn btn-icon btn-ghost" data-action="delete-play" data-id="${p.id}" aria-label="Eliminar partida" title="Eliminar">✕</button>
+              </td>
             </tr>`).join('') || `<tr><td colspan="6" class="text-muted" style="padding:22.4px 0">Todavía no hay partidas registradas.</td></tr>`}
         </tbody>
       </table></div>
@@ -1456,6 +1459,12 @@
     }
   }
 
+  async function deletePlay(id) {
+    if (!window.confirm('¿Eliminar esta partida? No se puede deshacer.')) return;
+    await api('api/plays.php?id=' + id, { method: 'DELETE' });
+    await refresh();
+  }
+
   async function addPlayer() {
     const name = state.newPlayerName.trim();
     if (!name) return;
@@ -1598,6 +1607,7 @@
       render();
       return;
     }
+    if (action === 'delete-play') { deletePlay(Number(t.dataset.id)); return; }
     if (action === 'open-wish') {
       state.dialog = 'wish'; state.wishForm = emptyWishForm(); state.formError = '';
       state.bgg = emptyBgg(); state.bggTarget = 'wish';

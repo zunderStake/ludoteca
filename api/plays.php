@@ -11,6 +11,17 @@ $pdo = ludoteca_db();
 ludoteca_require_up_to_date_api($pdo);
 
 $method = $_SERVER['REQUEST_METHOD'];
+if ($method === 'DELETE') {
+    $playId = (int) ($_GET['id'] ?? 0);
+    if (!$playId) {
+        json_error('Falta el id de la partida.');
+    }
+    // play_players tiene ON DELETE CASCADE (ver includes/schema.php), así que basta con
+    // borrar la partida para que se lleve también sus jugadores.
+    $pdo->prepare('DELETE FROM plays WHERE id = ?')->execute([$playId]);
+    json_ok();
+}
+
 if ($method !== 'POST' && $method !== 'PUT') {
     json_error('Método no permitido.', 405);
 }
