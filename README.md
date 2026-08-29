@@ -291,7 +291,7 @@ como algo dirigido a ellos en persona.
 
 ## 💾 Copia de seguridad
 
-El número de versión de la cabecera (`v1.9.6`) es también un enlace "oculto": para quien
+El número de versión de la cabecera (`v1.9.7`) es también un enlace "oculto": para quien
 puede gestionar la colección (admin/coleccionista), pulsarlo descarga un `.sql` con el
 esquema completo (`CREATE TABLE IF NOT EXISTS`) más todos los datos como `INSERT`
 (`backup.php` / `includes/backup.php`) — restaurable directamente con
@@ -408,6 +408,7 @@ personal normal, lo más sencillo sigue siendo la instalación descrita en
 
 | Versión | Resumen |
 |---|---|
+| **1.9.7** | Al registrar una partida competitiva ahora se puede marcar **empate** y elegir qué jugadores empataron; cuentan como victoria para todos ellos en Jugadores y Ranking. |
 | **1.9.6** | Las partidas registradas también se pueden **eliminar** (botón ✕ junto al de editar, con confirmación). |
 | **1.9.5** | Las partidas registradas se pueden **editar** (fecha, juego, jugadores, ganador/resultado y duración) desde un botón ✎ en la tabla de Partidas. Corrección: en móvil, los diálogos largos (por ejemplo Editar juego con "Es una expansión" marcado) no tenían límite de altura ni scroll propio, así que los botones de guardar podían quedar fuera de la pantalla sin forma de llegar a ellos. |
 | **1.9.4** | Corrección: en el "Juego aleatorio", el resultado era literalmente la última carátula de la cinta, así que a su derecha no había nada y parecía que se había acabado la lista — ahora hay carátulas de más después del resultado, para que el carrusel siga viéndose "vivo" a los dos lados de donde para. |

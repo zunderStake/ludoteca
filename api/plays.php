@@ -53,14 +53,28 @@ foreach ($jugadores as $nombre) {
 // Los juegos cooperativos se ganan o se pierden en grupo: no hay un "ganador" individual.
 $ganadorId = null;
 $resultado = null;
+$empate = false;
+$ganadorPlayerIds = [];
 if ($isCoop) {
     $resultado = str_or($b['resultado'] ?? '', 'Victoria');
     if (!in_array($resultado, ['Victoria', 'Derrota'], true)) {
         $resultado = 'Victoria';
     }
 } else {
-    $ganadorNombre = str_or($b['ganador'] ?? '', $jugadores[0]);
-    $ganadorId = $playerIds[$ganadorNombre] ?? repo_find_or_create_player($pdo, $ganadorNombre);
+    $empate = !empty($b['empate']);
+    if ($empate) {
+        $ganadoresNombres = array_values(array_unique(array_filter(array_map('trim', (array) ($b['ganadores'] ?? [])))));
+        $ganadoresNombres = array_values(array_intersect($ganadoresNombres, $jugadores));
+        if (count($ganadoresNombres) < 2) {
+            json_error('En un empate, selecciona al menos dos jugadores empatados.');
+        }
+        foreach ($ganadoresNombres as $nombre) {
+            $ganadorPlayerIds[] = $playerIds[$nombre];
+        }
+    } else {
+        $ganadorNombre = str_or($b['ganador'] ?? '', $jugadores[0]);
+        $ganadorId = $playerIds[$ganadorNombre] ?? repo_find_or_create_player($pdo, $ganadorNombre);
+    }
 }
 
 $duracion = max(1, (int) num_or($b['duracion'] ?? null, 60));
@@ -70,13 +84,13 @@ if ($method === 'POST') {
 
     $pdo->beginTransaction();
     try {
-        $stmt = $pdo->prepare('INSERT INTO plays (game_id, fecha, ganador_id, resultado, duracion) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute([$gameId, $fecha, $ganadorId, $resultado, $duracion]);
+        $stmt = $pdo->prepare('INSERT INTO plays (game_id, fecha, ganador_id, resultado, empate, duracion) VALUES (?, ?, ?, ?, ?, ?)');
+        $stmt->execute([$gameId, $fecha, $ganadorId, $resultado, $empate ? 1 : 0, $duracion]);
         $playId = (int) $pdo->lastInsertId();
 
-        $link = $pdo->prepare('INSERT INTO play_players (play_id, player_id) VALUES (?, ?)');
+        $link = $pdo->prepare('INSERT INTO play_players (play_id, player_id, es_ganador) VALUES (?, ?, ?)');
         foreach ($playerIds as $pid) {
-            $link->execute([$playId, $pid]);
+            $link->execute([$playId, $pid, in_array($pid, $ganadorPlayerIds, true) ? 1 : 0]);
         }
 
         // Las propuestas de "Quiero jugar" de este juego que alguien había aceptado ya
@@ -114,13 +128,13 @@ if ($method === 'POST') {
 
     $pdo->beginTransaction();
     try {
-        $pdo->prepare('UPDATE plays SET game_id = ?, fecha = ?, ganador_id = ?, resultado = ?, duracion = ? WHERE id = ?')
-            ->execute([$gameId, $fecha, $ganadorId, $resultado, $duracion, $playId]);
+        $pdo->prepare('UPDATE plays SET game_id = ?, fecha = ?, ganador_id = ?, resultado = ?, empate = ?, duracion = ? WHERE id = ?')
+            ->execute([$gameId, $fecha, $ganadorId, $resultado, $empate ? 1 : 0, $duracion, $playId]);
 
         $pdo->prepare('DELETE FROM play_players WHERE play_id = ?')->execute([$playId]);
-        $link = $pdo->prepare('INSERT INTO play_players (play_id, player_id) VALUES (?, ?)');
+        $link = $pdo->prepare('INSERT INTO play_players (play_id, player_id, es_ganador) VALUES (?, ?, ?)');
         foreach ($playerIds as $pid) {
-            $link->execute([$playId, $pid]);
+            $link->execute([$playId, $pid, in_array($pid, $ganadorPlayerIds, true) ? 1 : 0]);
         }
         $pdo->commit();
     } catch (Throwable $e) {

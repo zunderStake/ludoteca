@@ -112,7 +112,7 @@
     return { query: '', results: [], searching: false, picked: null, error: '' };
   }
   function emptyPlayForm() {
-    return { gameId: '', jugadores: [], ganador: '', resultado: 'Victoria', duracion: '60', fecha: '' };
+    return { gameId: '', jugadores: [], ganador: '', empate: false, ganadores: [], resultado: 'Victoria', duracion: '60', fecha: '' };
   }
   function emptyWantPlayForm() {
     return { gameId: '', targetIds: [] };
@@ -337,6 +337,9 @@
     if (p.resultado) {
       return p.resultado === 'Victoria' && p.jugadores.some((j) => j.nombre === nombre);
     }
+    if (p.empate) {
+      return (p.ganadores || []).includes(nombre);
+    }
     return p.ganador_nombre === nombre;
   }
 
@@ -375,7 +378,9 @@
       const gameIdsOfType = new Set(games.filter((g) => g.tipo === tipo).map((g) => g.id));
       const winsByPlayer = {};
       plays.filter((p) => gameIdsOfType.has(p.game_id)).forEach((p) => {
-        const candidates = p.resultado ? p.jugadores.map((j) => j.nombre) : [p.ganador_nombre].filter(Boolean);
+        const candidates = p.resultado
+          ? p.jugadores.map((j) => j.nombre)
+          : (p.empate ? p.ganadores : [p.ganador_nombre].filter(Boolean));
         candidates.forEach((nombre) => {
           if (playerWonPlay(p, nombre)) winsByPlayer[nombre] = (winsByPlayer[nombre] || 0) + 1;
         });
@@ -643,7 +648,9 @@
               <td class="col-jugadores">${esc(p.jugadores.map((j) => j.nombre).join(', '))}</td>
               <td>${p.resultado
                 ? `<span class="tag ${p.resultado === 'Victoria' ? 'tag-accent' : 'tag-neutral'}">${esc(p.resultado)}</span>`
-                : `<span class="tag tag-outline tag-tipo">${esc(p.ganador_nombre || '—')}</span>`}</td>
+                : p.empate
+                  ? `<span class="tag tag-outline tag-tipo">Empate: ${esc(p.ganadores.join(', ') || '—')}</span>`
+                  : `<span class="tag tag-outline tag-tipo">${esc(p.ganador_nombre || '—')}</span>`}</td>
               <td class="col-duracion">${esc(p.duracion)} min</td>
               <td style="white-space:nowrap">
                 <button class="btn btn-icon btn-ghost" data-action="edit-play" data-id="${p.id}" aria-label="Editar partida" title="Editar">✎</button>
@@ -1128,11 +1135,22 @@
           </div>
         </div>` : `
         <div class="field">
+          ${checkboxHtml('p-empate', 'data-pfield="empate"', 'Ha habido empate', pf.empate)}
+        </div>
+        ${pf.empate ? `
+        <div class="field">
+          <label>Jugadores empatados</label>
+          <div class="chip-row">
+            ${pf.jugadores.map((n) => `
+              <button type="button" class="chip ${pf.ganadores.includes(n) ? 'selected' : ''}" data-action="toggle-ganador-empate" data-name="${esc(n)}">${esc(n)}</button>`).join('') || '<span class="text-muted" style="font-size:13px">Selecciona jugadores arriba primero.</span>'}
+          </div>
+        </div>` : `
+        <div class="field">
           <label for="p-gan">Ganador</label>
           <select id="p-gan" class="input" data-action="play-winner">
             ${pf.jugadores.map((n) => `<option value="${esc(n)}" ${n === pf.ganador ? 'selected' : ''}>${esc(n)}</option>`).join('') || '<option value="">—</option>'}
           </select>
-        </div>`}
+        </div>`}`}
 
         <div class="field">
           <label for="p-dur">Duración (min)</label>
@@ -1435,10 +1453,18 @@
     }
     const game = state.games.find((g) => String(g.id) === String(pf.gameId));
     const isCoop = !!game && game.tipo === 'Cooperativo';
+    if (!isCoop && pf.empate && pf.ganadores.length < 2) {
+      state.playError = 'En un empate, selecciona al menos dos jugadores empatados.';
+      render();
+      return;
+    }
     try {
       const body = { game_id: Number(pf.gameId), jugadores: pf.jugadores, duracion: pf.duracion };
       if (isCoop) {
         body.resultado = pf.resultado || 'Victoria';
+      } else if (pf.empate) {
+        body.empate = true;
+        body.ganadores = pf.ganadores;
       } else {
         body.ganador = pf.ganador || pf.jugadores[0];
       }
@@ -1601,7 +1627,9 @@
       state.dialog = 'play'; state.playError = ''; state.editingPlayId = p.id;
       state.playForm = {
         gameId: String(p.game_id), jugadores: p.jugadores.map((j) => j.nombre),
-        ganador: isCoop ? '' : (p.ganador_nombre || p.jugadores[0]?.nombre || ''),
+        ganador: isCoop || p.empate ? '' : (p.ganador_nombre || p.jugadores[0]?.nombre || ''),
+        empate: !isCoop && !!p.empate,
+        ganadores: !isCoop && p.empate ? p.ganadores.slice() : [],
         resultado: p.resultado || 'Victoria', duracion: String(p.duracion), fecha: p.fecha,
       };
       render();
@@ -1694,6 +1722,15 @@
       const idx = pf.jugadores.indexOf(name);
       if (idx >= 0) pf.jugadores.splice(idx, 1); else pf.jugadores.push(name);
       if (!pf.jugadores.includes(pf.ganador)) pf.ganador = pf.jugadores[0] || '';
+      pf.ganadores = pf.ganadores.filter((n) => pf.jugadores.includes(n));
+      render();
+      return;
+    }
+    if (action === 'toggle-ganador-empate') {
+      const name = t.dataset.name;
+      const pf = state.playForm;
+      const idx = pf.ganadores.indexOf(name);
+      if (idx >= 0) pf.ganadores.splice(idx, 1); else pf.ganadores.push(name);
       render();
       return;
     }
@@ -1763,6 +1800,14 @@
     }
     if (e.target.type === 'checkbox' && e.target.dataset.wfield) {
       state.wishForm[e.target.dataset.wfield] = e.target.checked;
+      return;
+    }
+    if (e.target.type === 'checkbox' && e.target.dataset.pfield) {
+      state.playForm[e.target.dataset.pfield] = e.target.checked;
+      if (e.target.dataset.pfield === 'empate') {
+        state.playForm.ganadores = state.playForm.ganadores.filter((n) => state.playForm.jugadores.includes(n));
+      }
+      render();
       return;
     }
     // <select> reliably fires 'change' but not always 'input' — cover the plain data-field/wfield/lfield

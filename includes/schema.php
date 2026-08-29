@@ -37,6 +37,7 @@ function ludoteca_schema_statements(): array
             fecha DATE NOT NULL,
             ganador_id INT UNSIGNED NULL,
             resultado ENUM('Victoria','Derrota') NULL DEFAULT NULL,
+            empate TINYINT(1) NOT NULL DEFAULT 0,
             duracion INT UNSIGNED NOT NULL DEFAULT 60,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             KEY idx_fecha (fecha),
@@ -47,6 +48,7 @@ function ludoteca_schema_statements(): array
         "CREATE TABLE IF NOT EXISTS play_players (
             play_id INT UNSIGNED NOT NULL,
             player_id INT UNSIGNED NOT NULL,
+            es_ganador TINYINT(1) NOT NULL DEFAULT 0,
             PRIMARY KEY (play_id, player_id),
             CONSTRAINT fk_pp_play FOREIGN KEY (play_id) REFERENCES plays(id) ON DELETE CASCADE,
             CONSTRAINT fk_pp_player FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
@@ -149,6 +151,8 @@ function ludoteca_run_migrations(PDO $pdo): void
         ['wishlist', 'edad_minima', "ALTER TABLE wishlist ADD COLUMN edad_minima TINYINT UNSIGNED NOT NULL DEFAULT 0 AFTER imagen_url"],
         ['wishlist', 'premium', "ALTER TABLE wishlist ADD COLUMN premium TINYINT(1) NOT NULL DEFAULT 0 AFTER edad_minima"],
         ['plays', 'resultado', "ALTER TABLE plays ADD COLUMN resultado ENUM('Victoria','Derrota') NULL DEFAULT NULL AFTER ganador_id"],
+        ['plays', 'empate', "ALTER TABLE plays ADD COLUMN empate TINYINT(1) NOT NULL DEFAULT 0 AFTER resultado"],
+        ['play_players', 'es_ganador', "ALTER TABLE play_players ADD COLUMN es_ganador TINYINT(1) NOT NULL DEFAULT 0"],
         ['app_users', 'password_hash', "ALTER TABLE app_users ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT '' AFTER nombre"],
         ['want_to_play_targets', 'accepted_at', "ALTER TABLE want_to_play_targets ADD COLUMN accepted_at DATETIME NULL AFTER dismissed_at"],
     ];

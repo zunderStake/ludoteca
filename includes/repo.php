@@ -74,7 +74,7 @@ function repo_players(PDO $pdo): array
 function repo_plays(PDO $pdo): array
 {
     $plays = $pdo->query(
-        "SELECT p.id, p.game_id, p.fecha, p.duracion, p.ganador_id, p.resultado,
+        "SELECT p.id, p.game_id, p.fecha, p.duracion, p.ganador_id, p.resultado, p.empate,
                 g.nombre AS juego_nombre, pl.nombre AS ganador_nombre
          FROM plays p
          LEFT JOIN games g ON g.id = p.game_id
@@ -89,19 +89,25 @@ function repo_plays(PDO $pdo): array
     $ids = array_column($plays, 'id');
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
     $stmt = $pdo->prepare(
-        "SELECT pp.play_id, pl.id AS player_id, pl.nombre
+        "SELECT pp.play_id, pl.id AS player_id, pl.nombre, pp.es_ganador
          FROM play_players pp JOIN players pl ON pl.id = pp.player_id
          WHERE pp.play_id IN ($placeholders)
          ORDER BY pl.nombre"
     );
     $stmt->execute($ids);
     $byPlay = [];
+    $ganadoresByPlay = [];
     foreach ($stmt->fetchAll() as $row) {
         $byPlay[$row['play_id']][] = ['id' => (int) $row['player_id'], 'nombre' => $row['nombre']];
+        if ((int) $row['es_ganador'] === 1) {
+            $ganadoresByPlay[$row['play_id']][] = $row['nombre'];
+        }
     }
 
     foreach ($plays as &$p) {
+        $p['empate'] = (bool) $p['empate'];
         $p['jugadores'] = $byPlay[$p['id']] ?? [];
+        $p['ganadores'] = $ganadoresByPlay[$p['id']] ?? [];
     }
     return $plays;
 }
